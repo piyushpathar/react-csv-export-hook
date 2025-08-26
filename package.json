@@ -1,6 +1,6 @@
 {
   "name": "react-csv-export-hook",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight React hook to export data as CSV with optional chaining safety.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
