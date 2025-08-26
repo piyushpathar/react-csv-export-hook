@@ -128,4 +128,4 @@ const exportCsv = useCsvExport(data, "");
 ---
 
 ## 📝 License
-MIT © 2025 Your Name  
+MIT © 2025 Piyush Pathar
