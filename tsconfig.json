@@ -4,6 +4,8 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -13,7 +15,9 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "noEmit": false
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
