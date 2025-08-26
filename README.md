@@ -1,131 +1,143 @@
-# 📦 react-csv-export-hook
+# React CSV Export Hook
 
-A lightweight **React hook** to export JSON/array data to CSV files.  
-Built with **TypeScript**, safe with **optional chaining**, and ready for production.  
+A lightweight React hook to export data as CSV with optional chaining safety.
 
----
+## Features
 
-## ✨ Features
-- ✅ Easy to use React hook (`useCsvExport`)
-- ✅ TypeScript support with generics
-- ✅ Handles special characters (quotes, commas, new lines)
-- ✅ Works with **React 17+ and 18+**
-- ✅ Exports data to CSV with one click
+- 🚀 **Lightweight**: Minimal bundle size with no external dependencies
+- 🔒 **Type Safe**: Full TypeScript support with generic types
+- 🛡️ **Safe**: Handles null/undefined data gracefully
+- 📱 **Universal**: Works in any React environment (browser, SSR, etc.)
+- 🎯 **Simple**: One hook, one function, easy to use
 
----
+## Installation
 
-## 📦 Installation
 ```bash
 npm install react-csv-export-hook
 # or
 yarn add react-csv-export-hook
+# or
+pnpm add react-csv-export-hook
 ```
 
----
+## Usage
 
-## 🚀 Usage
+### Basic Example
 
 ```tsx
-import React from "react";
-import { useCsvExport } from "react-csv-export-hook";
+import { useCsvExport } from 'react-csv-export-hook';
 
-const App = () => {
+function MyComponent() {
   const data = [
-    { name: "Alice", age: 25, city: "New York" },
-    { name: "Bob", age: 30, city: "London" },
+    { name: 'John', age: 30, city: 'New York' },
+    { name: 'Jane', age: 25, city: 'Los Angeles' },
+    { name: 'Bob', age: 35, city: 'Chicago' }
   ];
-
-  const exportCsv = useCsvExport(data, "users.csv");
-
+  
+  const exportCsv = useCsvExport(data, 'users-data');
+  
   return (
     <button onClick={exportCsv}>
-      Export Users
+      Export to CSV
     </button>
   );
-};
-
-export default App;
+}
 ```
 
-✅ Clicking the button will download a file named `users.csv` with your data.
+### With Optional Chaining
 
----
-
-## 📄 Example CSV Output
-Input data:
-```json
-[
-  { "name": "Alice", "age": 25, "city": "New York" },
-  { "name": "Bob", "age": 30, "city": "London" }
-]
-```
-
-Output file:
-```csv
-"name","age","city"
-"Alice","25","New York"
-"Bob","30","London"
-```
-
----
-
-## 🔧 API
-
-### `useCsvExport<T>(data: T[] | null | undefined, fileName: string)`
-
-| Parameter   | Type                          | Description                                      |
-|-------------|-------------------------------|--------------------------------------------------|
-| `data`      | `T[] | null | undefined`      | Array of objects to export as CSV                |
-| `fileName`  | `string`                      | File name for the exported CSV (e.g. `"users.csv"`) |
-
-**Returns:**  
-- A function `() => void` → Call it to trigger the CSV download.
-
----
-
-## ⚡ Advanced Usage
-
-### Export Dynamic Data
 ```tsx
-import { useCsvExport } from "react-csv-export-hook";
-
-const ExportLeads = ({ leads }) => {
-  const exportCsv = useCsvExport(leads, "leads.csv");
-
-  return <button onClick={exportCsv}>Download Leads</button>;
-};
+function UserList({ users }) {
+  // Safe to use with optional chaining
+  const exportCsv = useCsvExport(users?.data, 'users-export');
+  
+  return (
+    <div>
+      {users?.data && (
+        <button onClick={exportCsv}>
+          Export {users.data.length} users
+        </button>
+      )}
+    </div>
+  );
+}
 ```
 
-### With Fallback Filename
+### Dynamic File Names
+
 ```tsx
-const exportCsv = useCsvExport(data, ""); 
-// defaults to "export.csv"
+function DataExport({ data, reportType }) {
+  const fileName = `${reportType}-${new Date().toISOString().split('T')[0]}`;
+  const exportCsv = useCsvExport(data, fileName);
+  
+  return (
+    <button onClick={exportCsv}>
+      Export {reportType} Report
+    </button>
+  );
+}
 ```
 
----
+## API Reference
 
-## 🛡️ Safety Features
-- Uses **optional chaining (`?.`)** → avoids crashes on missing fields
-- Converts all values to strings safely
-- Escapes CSV-specific characters (`"`, `,`, `
-`)
-- Provides default filename (`export.csv`) if none is given
+### `useCsvExport<T>(data, fileName)`
 
----
+**Parameters:**
+- `data: T[] | null | undefined` - Array of objects to export, or null/undefined
+- `fileName: string` - Name of the CSV file (without .csv extension)
 
-## 📚 Requirements
-- React `^17.0.0` or `^18.0.0`
-- TypeScript (recommended, but optional)
+**Returns:**
+- `() => void` - Function that triggers the CSV download when called
 
----
+**Generic Type:**
+- `T extends Record<string, unknown>` - Type constraint ensuring data objects have string keys
 
-## 🏗️ Roadmap
-- [ ] Custom column headers
-- [ ] Exclude specific fields
-- [ ] Async/streaming support for large datasets
-- [ ] Column ordering support
+## Troubleshooting
 
----
+### Import Suggestions Not Working
 
-## 📝 License
-MIT © 2025 Piyush Pathar
+If you're not getting import suggestions in your IDE:
+
+1. **Ensure TypeScript is installed** in your project:
+   ```bash
+   npm install -D typescript @types/node
+   ```
+
+2. **Check your tsconfig.json** includes the package:
+   ```json
+   {
+     "compilerOptions": {
+       "moduleResolution": "node",
+       "esModuleInterop": true,
+       "allowSyntheticDefaultImports": true
+     }
+   }
+   ```
+
+3. **Restart your TypeScript language server** in your IDE
+
+4. **Clear node_modules and reinstall**:
+   ```bash
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+### Common Issues
+
+- **Data not exporting**: Ensure your data is an array of objects with string keys
+- **File not downloading**: Check if your browser blocks popups/downloads
+- **Empty CSV**: Verify your data array is not empty and objects have properties
+
+## Browser Support
+
+- ✅ Modern browsers (Chrome, Firefox, Safari, Edge)
+- ✅ React 17+ (uses modern React patterns)
+- ✅ TypeScript 4.0+
+
+## License
+
+MIT License - see [LICENSE.md](LICENSE.md) for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

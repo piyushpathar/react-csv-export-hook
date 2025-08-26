@@ -1,5 +1,39 @@
 import { useCallback } from "react";
 
+/**
+ * A React hook for exporting data as CSV files with optional chaining safety.
+ *
+ * @template T - The type of data objects to export. Must extend Record<string, unknown>.
+ * @param data - An array of data objects to export, or null/undefined for empty state.
+ * @param fileName - The name of the CSV file to download (without .csv extension).
+ * @returns A function that triggers the CSV download when called.
+ *
+ * @example
+ * ```tsx
+ * import { useCsvExport } from 'react-csv-export-hook';
+ *
+ * function MyComponent() {
+ *   const data = [
+ *     { name: 'John', age: 30, city: 'New York' },
+ *     { name: 'Jane', age: 25, city: 'Los Angeles' }
+ *   ];
+ *
+ *   const exportCsv = useCsvExport(data, 'users-data');
+ *
+ *   return (
+ *     <button onClick={exportCsv}>
+ *       Export to CSV
+ *     </button>
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With optional chaining safety
+ * const exportCsv = useCsvExport(users?.data, 'users-data');
+ * ```
+ */
 export const useCsvExport = <T extends Record<string, unknown>>(
   data: T[] | null | undefined,
   fileName: string
