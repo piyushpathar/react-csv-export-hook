@@ -1,17 +1,29 @@
-# React CSV Export Hook
+# React CSV Export Hook - Universal Cross-Platform Solution
 
-A lightweight React hook to export data as CSV with optional chaining safety. Supports both web browsers and React Native environments.
+A comprehensive React hook library for exporting data as CSV with universal support for all platforms and React versions.
 
-## Features
+## 🌟 **Features**
 
-- 🚀 **Lightweight**: Minimal bundle size with no external dependencies
-- 🔒 **Type Safe**: Full TypeScript support with generic types
+- 🚀 **Universal**: Single hook works on all platforms
+- 🔒 **Type Safe**: Full TypeScript support with generics
 - 🛡️ **Safe**: Handles null/undefined data gracefully with optional chaining
-- 📱 **Universal**: Works in web browsers and React Native
-- 🎯 **Simple**: Two hooks for different environments
+- 📱 **Cross-Platform**: Web, React Native (iOS/Android), Next.js, SSR
 - ⚡ **React 19 Ready**: Compatible with React 17+ including latest versions
+- 🎯 **Zero Dependencies**: No external packages required
+- 🔄 **SSR Safe**: Works in server-side rendering environments
+- 🎨 **Flexible**: Multiple hooks for specialized use cases
 
-## Installation
+## 🚀 **Supported Platforms**
+
+| Platform | Support | Features |
+|----------|---------|----------|
+| **Web Browsers** | ✅ Full | File download, Blob support |
+| **React Native** | ✅ Full | Clipboard, sharing, CSV string |
+| **Next.js** | ✅ Full | SSR safe, API integration |
+| **React 17-19** | ✅ Full | Modern React patterns |
+| **iOS/Android** | ✅ Full | Native sharing capabilities |
+
+## 📦 **Installation**
 
 ```bash
 npm install react-csv-export-hook
@@ -21,19 +33,13 @@ yarn add react-csv-export-hook
 pnpm add react-csv-export-hook
 ```
 
-### React Native Setup
+**That's it! No additional packages needed.** 🎉
 
-For React Native projects, install a sharing library:
+## 🎯 **Usage**
 
-```bash
-npm install react-native-share
-# or
-yarn add react-native-share
-```
+### **Universal Hook (Recommended)**
 
-## Usage
-
-### Web Browser Usage
+The main `useCsvExport` hook automatically detects your platform and provides appropriate functionality:
 
 ```tsx
 import { useCsvExport } from 'react-csv-export-hook';
@@ -44,22 +50,57 @@ function MyComponent() {
     { name: 'Jane', age: 25, city: 'Los Angeles' }
   ];
   
-  const exportCsv = useCsvExport(data, 'users-data');
+  const { exportCsv, csvString, platform, shareOptions } = useCsvExport(data, 'users-data');
   
   return (
-    <button onClick={exportCsv}>
-      Export to CSV
-    </button>
+    <div>
+      <p>Platform: {platform}</p>
+      <button onClick={exportCsv}>
+        Export to CSV
+      </button>
+      
+      {platform === 'react-native' && (
+        <div>
+          <p>CSV ready for sharing: {csvString}</p>
+          <button onClick={() => shareOptions.copyToClipboard()}>
+            Copy to Clipboard
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 ```
 
-### React Native Usage
+### **Web Browser Usage**
 
 ```tsx
-import { useCsvExportNative } from 'react-csv-export-hook';
-import Share from 'react-native-share';
-import { Button } from 'react-native';
+import { useCsvExport } from 'react-csv-export-hook';
+
+function WebComponent() {
+  const data = [
+    { name: 'John', age: 30, city: 'New York' },
+    { name: 'Jane', age: 25, city: 'Los Angeles' }
+  ];
+  
+  const { exportCsv, platform } = useCsvExport(data, 'users-data');
+  
+  return (
+    <div>
+      <p>Platform: {platform}</p>
+      <button onClick={exportCsv}>
+        Download CSV
+      </button>
+    </div>
+  );
+}
+```
+
+### **React Native Usage**
+
+```tsx
+import { useCsvExport } from 'react-csv-export-hook';
+import { Button, Alert } from 'react-native';
 
 function NativeComponent() {
   const data = [
@@ -67,32 +108,59 @@ function NativeComponent() {
     { name: 'Jane', age: 25, city: 'Los Angeles' }
   ];
   
-  const getCsvString = useCsvExportNative(data);
+  const { exportCsv, csvString, shareOptions } = useCsvExport(data, 'users-data');
   
-  const handleShare = async () => {
-    try {
-      const csvString = getCsvString();
-      await Share.open({
-        title: 'Export CSV',
-        message: 'Share your data as CSV',
-        url: `data:text/csv;base64,${Buffer.from(csvString).toString('base64')}`,
-        type: 'text/csv'
-      });
-    } catch (error) {
-      console.error('Error sharing CSV:', error);
-    }
+  const handleExport = () => {
+    exportCsv();
+    Alert.alert('Success', 'CSV data ready for sharing');
   };
   
-  return <Button title="Share CSV" onPress={handleShare} />;
+  return (
+    <div>
+      <Button title="Generate CSV" onPress={handleExport} />
+      <Button title="Copy to Clipboard" onPress={() => shareOptions.copyToClipboard()} />
+      <Button title="Share CSV" onPress={() => shareOptions.shareWithLibrary()} />
+    </div>
+  );
 }
 ```
 
-### With Optional Chaining Safety
+### **Next.js Usage**
+
+```tsx
+import { useCsvExportNext } from 'react-csv-export-hook';
+
+function NextJSComponent() {
+  const data = [
+    { name: 'John', age: 30, city: 'New York' },
+    { name: 'Jane', age: 25, city: 'Los Angeles' }
+  ];
+  
+  const { exportCsv, csvString, isClient, isSSR, downloadFromAPI } = useCsvExportNext(data, 'users-data');
+  
+  return (
+    <div>
+      {isSSR && <p>Loading...</p>}
+      {isClient && (
+        <>
+          <button onClick={exportCsv}>
+            Download CSV
+          </button>
+          <button onClick={() => downloadFromAPI('/api/export-csv')}>
+            Download via API
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+```
+
+### **With Optional Chaining Safety**
 
 ```tsx
 function UserList({ users }) {
-  // Safe to use with optional chaining
-  const exportCsv = useCsvExport(users?.data, 'users-export');
+  const { exportCsv, csvString } = useCsvExport(users?.data, 'users-export');
   
   return (
     <div>
@@ -106,124 +174,170 @@ function UserList({ users }) {
 }
 ```
 
-### React Native with useCsvExport
+## 🔧 **API Reference**
 
-```tsx
-import { Alert } from 'react-native';
-
-function NativeComponent() {
-  const data = [{ name: 'John', age: 30 }];
-  const exportCsv = useCsvExport(data, 'users-data');
-  
-  const handleExport = () => {
-    exportCsv();
-    Alert.alert('Success', 'CSV data ready for sharing');
-  };
-  
-  return <Button title="Export CSV" onPress={handleExport} />;
-}
-```
-
-## API Reference
-
-### `useCsvExport<T>(data, fileName)` - Universal Hook
+### **`useCsvExport<T>(data, fileName)` - Universal Hook**
 
 **Parameters:**
-- `data: T[] | null | undefined` - Array of objects to export, or null/undefined
+- `data: T[] | null | undefined` - Array of objects to export
 - `fileName: string` - Name of the CSV file (without .csv extension)
 
 **Returns:**
-- `() => void` - Function that triggers CSV download in browsers or logs CSV string in React Native
+- `exportCsv: () => void` - Function that triggers CSV export/download
+- `csvString: string` - Generated CSV string
+- `platform: string` - Detected platform ('web', 'react-native', 'nextjs', 'ssr')
+- `shareOptions: object` - Platform-specific sharing utilities
+- `isWeb: boolean` - Whether running in web browser
+- `isReactNative: boolean` - Whether running in React Native
+- `isNextJS: boolean` - Whether running in Next.js
+- `isSSR: boolean` - Whether running in SSR environment
 
-**Behavior:**
-- **Web Browser**: Downloads CSV file automatically
-- **React Native**: Logs CSV string to console (use `useCsvExportNative` for better integration)
-
-### `useCsvExportNative<T>(data)` - React Native Specific
+### **`useCsvExportNative<T>(data)` - React Native Specific**
 
 **Parameters:**
-- `data: T[] | null | undefined` - Array of objects to export, or null/undefined
+- `data: T[] | null | undefined` - Array of objects to export
 
 **Returns:**
-- `() => string` - Function that returns the CSV string when called
+- `csvString: string` - Generated CSV string
+- `shareOptions: object` - React Native sharing utilities
 
-**Generic Type:**
-- `T extends Record<string, unknown>` - Type constraint ensuring data objects have string keys
+### **`useCsvExportNext<T>(data, fileName)` - Next.js Specific**
 
-## How It Works
+**Parameters:**
+- `data: T[] | null | undefined` - Array of objects to export
+- `fileName: string` - Name of the CSV file
 
-### Web Browser Environment
-- Detects browser environment using `typeof window !== "undefined" && typeof document !== "undefined"`
-- Creates a Blob with CSV data
-- Generates download link and triggers file download
-- Automatically cleans up resources
+**Returns:**
+- `exportCsv: () => void` - Client-side CSV export
+- `csvString: string` - Generated CSV string
+- `isClient: boolean` - Whether component is hydrated
+- `isSSR: boolean` - Whether running in SSR
+- `downloadFromAPI: (route, options) => Promise<void>` - API-based download
+- `getCSVForAPI: () => object` - CSV data for API integration
 
-### React Native Environment
-- **`useCsvExport`**: Logs CSV string to console for debugging
-- **`useCsvExportNative`**: Returns CSV string for use with sharing libraries
-- No DOM manipulation (safe for React Native)
+## 🌐 **Platform Detection**
 
-### CSV Generation
-- Automatically extracts headers from first data object
-- Escapes special characters (quotes, commas, newlines)
-- Handles null/undefined values safely
-- Generates properly formatted CSV with headers
+The hooks automatically detect your environment:
 
-## Error Handling
+```tsx
+const { platform, isWeb, isReactNative, isNextJS, isSSR } = useCsvExport(data, 'filename');
 
-The hooks include built-in error handling:
+console.log(platform); // 'web' | 'react-native' | 'nextjs' | 'ssr'
+```
 
-- **Empty Data**: Warns if no data is provided
-- **Invalid Data**: Warns if data objects have no keys
-- **Export Failures**: Logs errors if CSV generation fails
-- **Platform Detection**: Automatically adapts to environment
+## 📱 **React Native Sharing Options**
 
-## React 19 Compatibility
+### **Built-in Functionality (No Dependencies)**
+```tsx
+const { shareOptions } = useCsvExport(data, 'filename');
+
+// Copy to clipboard
+await shareOptions.copyToClipboard();
+
+// Get CSV string
+const csvString = shareOptions.getString();
+
+// Get base64 data URL
+const dataUrl = shareOptions.getDataUrl();
+```
+
+### **Optional Libraries (Enhanced Functionality)**
+```tsx
+// With react-native-share (optional)
+await shareOptions.shareWithLibrary();
+
+// With Expo Sharing (optional)
+await shareOptions.shareWithExpo();
+```
+
+## 🔄 **Next.js Integration**
+
+### **API Route Example**
+```typescript
+// pages/api/export-csv.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  const { data, fileName } = req.body;
+  
+  // Generate CSV
+  const headers = Object.keys(data[0]);
+  const csvContent = [
+    headers.join(','),
+    ...data.map(row => headers.map(h => `"${row[h]}"`).join(','))
+  ].join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}.csv"`);
+  res.status(200).send(csvContent);
+}
+```
+
+### **Client Usage**
+```tsx
+const { downloadFromAPI } = useCsvExportNext(data, 'users-data');
+
+const handleDownload = () => {
+  downloadFromAPI('/api/export-csv');
+};
+```
+
+## 🚀 **React 19 Compatibility**
 
 This package is fully compatible with React 19 and uses modern React patterns:
 
 - ✅ **React 17+** (including React 18 and 19)
 - ✅ **Concurrent Features** ready
 - ✅ **Strict Mode** compatible
-- ✅ **Server Components** safe (for web usage)
+- ✅ **Server Components** safe
 - ✅ **Optional Chaining** support
+- ✅ **Modern Hooks** patterns
 
-## React Native Compatibility
+## 🔧 **Advanced Usage**
 
-The package provides two approaches for React Native:
-
-1. **`useCsvExport`** - Universal hook that logs CSV in React Native
-2. **`useCsvExportNative`** - Dedicated hook that returns CSV string
-
-### React Native Integration
-
+### **Custom CSV Generation**
 ```tsx
-// Using with react-native-share
-import { useCsvExportNative } from 'react-csv-export-hook';
-import Share from 'react-native-share';
+const { csvString, shareOptions } = useCsvExport(data, 'filename');
 
-const getCsvString = useCsvExportNative(data);
-const csvString = getCsvString();
+// Use CSV string for custom purposes
+const customProcessing = (csv: string) => {
+  // Your custom logic here
+  console.log('Processing CSV:', csv);
+};
 
-// Share the CSV string
-await Share.open({
-  url: `data:text/csv;base64,${Buffer.from(csvString).toString('base64')}`,
-  type: 'text/csv'
-});
+customProcessing(csvString);
 ```
 
-## Troubleshooting
+### **Platform-Specific Logic**
+```tsx
+const { platform, exportCsv, shareOptions } = useCsvExport(data, 'filename');
 
-### Import Suggestions Not Working
+if (platform === 'react-native') {
+  // React Native specific logic
+  shareOptions.copyToClipboard();
+} else if (platform === 'web') {
+  // Web specific logic
+  exportCsv();
+} else if (platform === 'ssr') {
+  // Server-side logic
+  console.log('CSV generated on server');
+}
+```
 
-If you're not getting import suggestions in your IDE:
+## 🛠 **Troubleshooting**
 
-1. **Ensure TypeScript is installed** in your project:
+### **Import Suggestions Not Working**
+
+1. **Ensure TypeScript is installed**:
    ```bash
    npm install -D typescript @types/node
    ```
 
-2. **Check your tsconfig.json** includes the package:
+2. **Check your tsconfig.json**:
    ```json
    {
      "compilerOptions": {
@@ -234,44 +348,58 @@ If you're not getting import suggestions in your IDE:
    }
    ```
 
-3. **Restart your TypeScript language server** in your IDE
+3. **Restart TypeScript language server** in your IDE
 
-4. **Clear node_modules and reinstall**:
-   ```bash
-   rm -rf node_modules package-lock.json
-   npm install
-   ```
+### **Platform-Specific Issues**
 
-### React Native Issues
+- **Web**: Ensure browser supports Blob and download
+- **React Native**: Check clipboard permissions
+- **Next.js**: Verify SSR/CSR hydration
+- **SSR**: Use `csvString` for server-side processing
 
-- **CSV not sharing**: Ensure you have `react-native-share` installed and properly linked
-- **Permission errors**: Check if your app has the necessary sharing permissions
-- **Base64 encoding**: The example uses `Buffer.from()` - you might need to polyfill this in React Native
-
-### Common Issues
-
-- **Data not exporting**: Ensure your data is an array of objects with string keys
-- **File not downloading**: Check if your browser blocks popups/downloads
-- **Empty CSV**: Verify your data array is not empty and objects have properties
-- **CSV string not returned**: Use `useCsvExportNative` for React Native string output
-
-## Browser Support
+## 🌍 **Browser Support**
 
 - ✅ Modern browsers (Chrome, Firefox, Safari, Edge)
 - ✅ React 17+ (including React 18 and 19)
 - ✅ TypeScript 4.0+
 
-## React Native Support
+## 📱 **React Native Support**
 
 - ✅ React Native 0.60+
 - ✅ Expo (managed and bare workflows)
+- ✅ iOS and Android
 - ✅ TypeScript support
 - ✅ No native dependencies
 
-## License
+## ⚡ **Performance**
+
+- **Lightweight**: Minimal bundle size
+- **Efficient**: Uses React.useCallback for optimization
+- **Lazy**: CSV generation only when needed
+- **Memory Safe**: Automatic cleanup of resources
+
+## 📄 **License**
 
 MIT License - see [LICENSE.md](LICENSE.md) for details.
 
-## Contributing
+## 🤝 **Contributing**
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 🆕 **Migration Guide**
+
+### **From v1.0.4 to v1.0.5**
+
+The main hook now returns an object instead of a function:
+
+```tsx
+// Old (v1.0.4)
+const exportCsv = useCsvExport(data, 'filename');
+exportCsv(); // Call the function
+
+// New (v1.0.5)
+const { exportCsv, csvString, platform } = useCsvExport(data, 'filename');
+exportCsv(); // Call the function
+```
+
+**Backward compatibility is maintained** - the old API still works, but the new API provides more features.
