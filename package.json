@@ -1,6 +1,6 @@
 {
   "name": "react-csv-export-hook",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Universal React hook for CSV export with cross-platform support (Web, React Native, Next.js, React 17-19)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
