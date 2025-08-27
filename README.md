@@ -269,9 +269,7 @@ Contributions are welcome! Please read our contributing guidelines.
 
 ## 🆘 Support
 
-- 📚 [Documentation](https://github.com/your-repo/react-csv-export-hook)
-- 🐛 [Issue Tracker](https://github.com/your-repo/react-csv-export-hook/issues)
-- 💬 [Discussions](https://github.com/your-repo/react-csv-export-hook/discussions)
+- 💬 [Discussions](https://github.com/piyushpathar/react-csv-export-hook/discussions)
 
 ---
 
