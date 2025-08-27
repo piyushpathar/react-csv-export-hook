@@ -1,0 +1,117 @@
+name: 🚀 Publish to NPM
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.2.0)'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - custom
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+          
+      - name: 📦 Install dependencies
+        run: npm ci
+        
+      - name: 🧪 Run tests
+        run: npm test --if-present
+        
+      - name: 🔍 Lint code
+        run: npm run lint
+        
+      - name: 🏗️ Build package
+        run: npm run build
+        
+      - name: ✅ Verify build output
+        run: |
+          echo "🔍 Checking build output..."
+          if [ ! -d "dist" ]; then
+            echo "❌ dist/ directory not found!"
+            exit 1
+          fi
+          
+          echo "📁 Build files:"
+          ls -la dist/
+          
+          echo "📊 File count:"
+          find dist/ -type f | wc -l
+          
+          echo "📋 Generated files:"
+          find dist/ -type f -name "*.js" -o -name "*.d.ts" | sort
+          
+          # Check if main files exist
+          if [ ! -f "dist/index.js" ] || [ ! -f "dist/index.d.ts" ]; then
+            echo "❌ Missing main build files!"
+            exit 1
+          fi
+          
+          echo "✅ Build verification passed!"
+        
+      - name: 🔐 Check NPM authentication
+        run: npm whoami
+        
+      - name: 📋 Check current package info
+        run: |
+          echo "📦 Current package info:"
+          npm view . name version description
+          
+      - name: 🚀 Publish to NPM
+        id: publish
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.version }}" != "custom" ]; then
+            echo "🔄 Bumping version: ${{ github.event.inputs.version }}"
+            npm version ${{ github.event.inputs.version }} --no-git-tag-version
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "📈 New version: $NEW_VERSION"
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "🚀 Publishing to NPM..."
+          npm publish --access public
+          
+      - name: 🎉 Publish verification
+        run: |
+          if [ "${{ steps.publish.outputs.new_version }}" != "" ]; then
+            VERSION="${{ steps.publish.outputs.new_version }}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          
+          echo "✅ Package published successfully!"
+          echo "📦 Package: $(npm view . name)"
+          echo "📈 Version: $VERSION"
+          echo "🔗 NPM URL: https://www.npmjs.com/package/$(npm view . name)"
+          
+      - name: 🏷️ Create Git tag (if version was bumped)
+        if: steps.publish.outputs.new_version != ''
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.publish.outputs.new_version }} [skip ci]"
+          git tag "v${{ steps.publish.outputs.new_version }}"
+          git push origin HEAD:${{ github.ref }}
+          git push origin "v${{ steps.publish.outputs.new_version }}"
