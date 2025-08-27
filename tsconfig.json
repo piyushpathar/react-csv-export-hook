@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "noEmit": false,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "moduleDetection": "force"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

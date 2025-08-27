@@ -1,14 +1,12 @@
 import { useCallback } from "react";
 
 /**
- * React Native specific wrapper for the CSV export hook.
+ * Simple React Native CSV export hook.
+ * Works in React Native and other environments.
  *
- * This is a lightweight wrapper around useCsvExport that provides
- * React Native specific utilities and better TypeScript support.
- *
- * @template T - The type of data objects to export. Must extend Record<string, unknown>.
- * @param data - An array of data objects to export, or null/undefined for empty state.
- * @returns An object with React Native specific CSV utilities.
+ * @template T - The type of data objects to export
+ * @param data - Array of data objects to export
+ * @returns Simple object with export functions
  *
  * @example
  * ```tsx
@@ -20,32 +18,28 @@ import { useCallback } from "react";
  *     { name: 'Jane', age: 25, city: 'Los Angeles' }
  *   ];
  *
- *   const { csvString, shareOptions } = useCsvExportNative(data);
+ *   const { copy, csvString, getBuffer } = useCsvExportNative(data);
  *
- *   const handleShare = () => {
- *     // Copy to clipboard
- *     shareOptions.copyToClipboard();
- *
- *     // Or use with react-native-share (if installed)
- *     // shareOptions.shareWithLibrary();
- *   };
- *
- *   return <Button title="Share CSV" onPress={handleShare} />;
+ *   return (
+ *     <div>
+ *       <Button title="Copy CSV" onPress={copy} />
+ *       <Text>CSV: {csvString}</Text>
+ *     </div>
+ *   );
  * }
  * ```
  */
 export const useCsvExportNative = <T extends Record<string, unknown>>(
   data: T[] | null | undefined
 ) => {
+  // Simple CSV generation
   const generateCsv = useCallback((): string => {
     if (!Array.isArray(data) || data?.length === 0) {
-      console.warn("[useCsvExportNative] No valid data provided for export.");
       return "";
     }
 
-    const headers = Object.keys(data?.[0] ?? {});
+    const headers = Object.keys(data[0]);
     if (headers.length === 0) {
-      console.warn("[useCsvExportNative] Data objects have no keys to export.");
       return "";
     }
 
@@ -65,99 +59,42 @@ export const useCsvExportNative = <T extends Record<string, unknown>>(
     return csvHeader + (csvRows ?? "");
   }, [data]);
 
-  const shareOptions = useCallback(
-    () => ({
-      // Copy to clipboard
-      copyToClipboard: async () => {
-        try {
-          const csvString = generateCsv();
-          if (csvString) {
-            // Try to use react-native-clipboard if available
-            if (typeof globalThis.ReactNativeClipboard !== "undefined") {
-              await globalThis.ReactNativeClipboard.setString(csvString);
-              console.log("[useCsvExportNative] CSV copied to clipboard");
-            } else {
-              console.log(
-                "[useCsvExportNative] CSV string ready for clipboard:",
-                csvString
-              );
-              console.log(
-                "[useCsvExportNative] Install react-native-clipboard for clipboard support"
-              );
-            }
-          }
-        } catch (error) {
-          console.error(
-            "[useCsvExportNative] Failed to copy to clipboard:",
-            error
-          );
-        }
-      },
+  // Copy to clipboard - works everywhere
+  const copy = useCallback(async () => {
+    const csvString = generateCsv();
+    if (!csvString) return;
 
-      // Share with react-native-share (if installed)
-      shareWithLibrary: async () => {
-        try {
-          const csvString = generateCsv();
-          if (csvString && typeof globalThis.ReactNativeShare !== "undefined") {
-            await globalThis.ReactNativeShare.open({
-              title: "Export CSV",
-              message: "Share your data as CSV",
-              url: `data:text/csv;base64,${btoa(csvString)}`,
-              type: "text/csv",
-            });
-          } else {
-            console.log(
-              "[useCsvExportNative] react-native-share not available"
-            );
-            console.log(
-              "[useCsvExportNative] Install react-native-share for sharing support"
-            );
-          }
-        } catch (error) {
-          console.error("[useCsvExportNative] Failed to share:", error);
-        }
-      },
+    try {
+      if (navigator.clipboard && typeof window !== "undefined") {
+        await navigator.clipboard.writeText(csvString);
+        console.log("CSV copied to clipboard!");
+      } else {
+        console.log("Clipboard not available. CSV string:", csvString);
+      }
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+    }
+  }, [generateCsv]);
 
-      // Share with Expo Sharing (if using Expo)
-      shareWithExpo: async () => {
-        try {
-          const csvString = generateCsv();
-          if (csvString && typeof globalThis.ExpoSharing !== "undefined") {
-            await globalThis.ExpoSharing.shareAsync(csvString, {
-              mimeType: "text/csv",
-              dialogTitle: "Export CSV",
-            });
-          } else {
-            console.log("[useCsvExportNative] Expo Sharing not available");
-            console.log(
-              "[useCsvExportNative] Use Expo SDK for sharing support"
-            );
-          }
-        } catch (error) {
-          console.error(
-            "[useCsvExportNative] Failed to share with Expo:",
-            error
-          );
-        }
-      },
+  // Get CSV as string - works everywhere
+  const csvString = generateCsv();
 
-      // Get base64 encoded data URL
-      getDataUrl: (): string => {
-        const csvString = generateCsv();
-        if (csvString) {
-          return `data:text/csv;base64,${btoa(csvString)}`;
-        }
-        return "";
-      },
+  // Get CSV as buffer for server-side usage
+  const getBuffer = useCallback((): Uint8Array | null => {
+    const csvString = generateCsv();
+    if (!csvString) return null;
 
-      // Get raw CSV string
-      getString: (): string => generateCsv(),
-    }),
-    [generateCsv]
-  );
+    try {
+      return new TextEncoder().encode(csvString);
+    } catch (error) {
+      console.error("Failed to create buffer:", error);
+      return null;
+    }
+  }, [generateCsv]);
 
   return {
-    csvString: generateCsv(),
-    shareOptions: shareOptions(),
+    copy, // Copy CSV to clipboard
+    csvString, // Get CSV as string
+    getBuffer, // Get CSV as buffer (for server-side)
   };
 };

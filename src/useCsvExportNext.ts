@@ -1,18 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Next.js specific CSV export hook with enhanced SSR support.
+ * Simple Next.js CSV export hook with SSR support.
+ * Works in both client and server environments.
  *
- * This hook provides Next.js specific functionality:
- * - Safe SSR handling
- * - Client-side hydration support
- * - Next.js specific optimizations
- * - API route integration support
- *
- * @template T - The type of data objects to export. Must extend Record<string, unknown>.
- * @param data - An array of data objects to export, or null/undefined for empty state.
- * @param fileName - The name of the CSV file (without .csv extension).
- * @returns An object with Next.js specific CSV utilities and SSR-safe functions.
+ * @template T - The type of data objects to export
+ * @param data - Array of data objects to export
+ * @param fileName - Name for the CSV file (without .csv extension)
+ * @returns Simple object with export functions and SSR status
  *
  * @example
  * ```tsx
@@ -24,35 +19,19 @@ import { useCallback, useEffect, useState } from "react";
  *     { name: 'Jane', age: 25, city: 'Los Angeles' }
  *   ];
  *
- *   const { exportCsv, csvString, isClient, isSSR } = useCsvExportNext(data, 'users-data');
+ *   const { download, copy, csvString, isReady } = useCsvExportNext(data, 'users');
  *
  *   return (
  *     <div>
- *       {isSSR && <p>Loading...</p>}
- *       {isClient && (
- *         <button onClick={exportCsv}>
- *           Export to CSV
- *         </button>
+ *       {!isReady && <p>Loading...</p>}
+ *       {isReady && (
+ *         <>
+ *           <button onClick={download}>Download CSV</button>
+ *           <button onClick={copy}>Copy to Clipboard</button>
+ *         </>
  *       )}
  *     </div>
  *   );
- * }
- * ```
- *
- * @example
- * ```tsx
- * // With API route integration
- * function APIIntegration() {
- *   const { csvString, downloadFromAPI } = useCsvExportNext(data, 'users-data');
- *
- *   const handleDownload = async () => {
- *     await downloadFromAPI('/api/export-csv', {
- *       method: 'POST',
- *       body: JSON.stringify({ data, fileName: 'users-data' })
- *     });
- *   };
- *
- *   return <button onClick={handleDownload}>Download via API</button>;
  * }
  * ```
  */
@@ -60,23 +39,20 @@ export const useCsvExportNext = <T extends Record<string, unknown>>(
   data: T[] | null | undefined,
   fileName: string
 ) => {
-  const [isClient, setIsClient] = useState(false);
-  const [isSSR, setIsSSR] = useState(true);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-    setIsSSR(false);
+    setIsReady(true);
   }, []);
 
+  // Simple CSV generation
   const generateCsv = useCallback((): string => {
     if (!Array.isArray(data) || data?.length === 0) {
-      console.warn("[useCsvExportNext] No valid data provided for export.");
       return "";
     }
 
-    const headers = Object.keys(data?.[0] ?? {});
+    const headers = Object.keys(data[0]);
     if (headers.length === 0) {
-      console.warn("[useCsvExportNext] Data objects have no keys to export.");
       return "";
     }
 
@@ -96,92 +72,72 @@ export const useCsvExportNext = <T extends Record<string, unknown>>(
     return csvHeader + (csvRows ?? "");
   }, [data]);
 
-  const exportCsv = useCallback(() => {
-    if (!isClient) {
-      console.warn("[useCsvExportNext] exportCsv called during SSR");
-      return;
-    }
+  // Download function - works in browsers
+  const download = useCallback(() => {
+    if (!isReady) return;
 
     const csvString = generateCsv();
     if (!csvString) return;
 
-    try {
-      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", fileName || "export.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("[useCsvExportNext] Failed to export CSV:", error);
-    }
-  }, [generateCsv, fileName, isClient]);
-
-  const downloadFromAPI = useCallback(
-    async (apiRoute: string, options: RequestInit = {}) => {
-      if (!isClient) {
-        console.warn("[useCsvExportNext] downloadFromAPI called during SSR");
-        return;
-      }
-
+    if (typeof window !== "undefined" && typeof document !== "undefined") {
       try {
-        const response = await fetch(apiRoute, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-          },
-          body: JSON.stringify({
-            data,
-            fileName: fileName || "export.csv",
-          }),
-          ...options,
-        });
-
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.statusText}`);
-        }
-
-        const blob = await response.blob();
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", fileName || "export.csv");
+        link.setAttribute("download", `${fileName || "export"}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
         URL.revokeObjectURL(url);
       } catch (error) {
-        console.error("[useCsvExportNext] Failed to download from API:", error);
+        console.error("Failed to download CSV:", error);
       }
-    },
-    [data, fileName, isClient]
-  );
+    }
+  }, [generateCsv, fileName, isReady]);
 
-  const getCSVForAPI = useCallback(() => {
+  // Copy function - works everywhere
+  const copy = useCallback(async () => {
+    if (!isReady) return;
+
     const csvString = generateCsv();
-    return {
-      csvString,
-      headers: data?.[0] ? Object.keys(data[0]) : [],
-      rowCount: data?.length || 0,
-      fileName: fileName || "export.csv",
-    };
-  }, [generateCsv, data, fileName]);
+    if (!csvString) return;
+
+    try {
+      if (navigator.clipboard && typeof window !== "undefined") {
+        await navigator.clipboard.writeText(csvString);
+        console.log("CSV copied to clipboard!");
+      } else {
+        console.log("Clipboard not available. CSV string:", csvString);
+      }
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+    }
+  }, [generateCsv, isReady]);
+
+  // Get CSV as string - works everywhere
+  const csvString = generateCsv();
+
+  // Get CSV as buffer for server-side usage
+  const getBuffer = useCallback((): Uint8Array | null => {
+    const csvString = generateCsv();
+    if (!csvString) return null;
+
+    try {
+      return new TextEncoder().encode(csvString);
+    } catch (error) {
+      console.error("Failed to create buffer:", error);
+      return null;
+    }
+  }, [generateCsv]);
 
   return {
-    exportCsv,
-    csvString: generateCsv(),
-    isClient,
-    isSSR,
-    downloadFromAPI,
-    getCSVForAPI,
-    platform: "nextjs",
+    download, // Download CSV file (browser only, after hydration)
+    copy, // Copy CSV to clipboard (after hydration)
+    csvString, // Get CSV as string (works everywhere)
+    getBuffer, // Get CSV as buffer (for server-side)
+    isReady, // True when hydrated and ready
   };
 };

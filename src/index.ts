@@ -1,11 +1,8 @@
 /**
- * React CSV Export Hook - Universal Cross-Platform Solution
+ * React CSV Export Hook - Simple & Universal
  *
- * A comprehensive React hook library for exporting data as CSV with support for:
- * - Web browsers (React 17-19)
- * - React Native (iOS/Android)
- * - Next.js (SSR/CSR)
- * - Server-side rendering
+ * A simple React hook library for exporting data as CSV.
+ * Works everywhere: Web, React Native, Next.js, Node.js, SSR.
  *
  * @packageDocumentation
  */
@@ -21,5 +18,4 @@ export { useCsvExportNext } from "./useCsvExportNext";
 export { useCsvExport as default } from "./useCsvExport";
 
 // Type exports for better TypeScript support
-export type {} from // Add type exports here when needed
-"./useCsvExport";
+export type {} from "./useCsvExport";
